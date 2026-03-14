@@ -6,7 +6,6 @@
     <title>存貨管理系統 (手機優化版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 自訂手機觸控區域 */
         button, select, input[type="file"] {
             touch-action: manipulation;
         }
@@ -35,11 +34,10 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <!-- 左側：新增/編輯產品表單 (手機上佔滿寬度) -->
+            <!-- 左側：新增/編輯產品表單 -->
             <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
                 <h2 class="font-bold mb-3 border-b pb-2 text-lg" id="form-title">新增產品</h2>
                 <div class="space-y-3">
-                    <!-- 分類 -->
                     <label class="block text-sm font-medium">分類</label>
                     <select id="category" class="w-full border p-3 sm:p-2 rounded text-base bg-white">
                         <option value="">請選擇分類</option>
@@ -51,27 +49,21 @@
                         <option>other</option>
                     </select>
 
-                    <!-- 品牌 -->
                     <label class="block text-sm font-medium">品牌</label>
                     <input type="text" id="brand" placeholder="品牌名稱" class="w-full border p-3 sm:p-2 rounded text-base">
 
-                    <!-- 產品編號 -->
                     <label class="block text-sm font-medium">產品編號</label>
                     <input type="text" id="product-code" placeholder="產品編號" class="w-full border p-3 sm:p-2 rounded text-base">
 
-                    <!-- 產品名稱 -->
                     <label class="block text-sm font-medium">產品名稱</label>
                     <input type="text" id="name" placeholder="產品名稱" class="w-full border p-3 sm:p-2 rounded text-base">
 
-                    <!-- 描述 -->
                     <label class="block text-sm font-medium">描述</label>
                     <textarea id="description" placeholder="描述" rows="2" class="w-full border p-3 sm:p-2 rounded text-base"></textarea>
                     
-                    <!-- 最低庫存量 -->
                     <label class="block text-sm font-medium">最低庫存量</label>
                     <input type="number" id="min-stock" min="0" value="0" class="w-full border p-3 sm:p-2 rounded text-base">
 
-                    <!-- 存放位置 -->
                     <label class="block text-sm font-medium">存放位置</label>
                     <select id="location" class="w-full border p-3 sm:p-2 rounded text-base bg-white">
                         <option value="">請選擇</option>
@@ -85,16 +77,13 @@
                         <option>other</option>
                     </select>
 
-                    <!-- 單位 -->
                     <label class="block text-sm font-medium">單位</label>
                     <input type="text" id="unit" placeholder="例如：個、箱、公斤" class="w-full border p-3 sm:p-2 rounded text-base">
 
-                    <!-- 圖片上傳 (手機可直接拍照) -->
                     <label class="block text-sm font-medium">產品圖片 (JPG/PNG，將自動壓縮)</label>
                     <input type="file" id="image-file" accept="image/jpeg,image/png,image/jpg" capture="environment" class="w-full text-sm border p-2 rounded bg-white">
                     <p class="text-xs text-gray-500">點擊可拍照或選擇圖片，系統會自動壓縮</p>
 
-                    <!-- 目前庫存 (僅編輯時顯示) -->
                     <div id="current-stock-field" class="hidden">
                         <label class="block text-sm font-medium">目前庫存</label>
                         <input type="number" id="current-stock" readonly class="w-full border p-3 sm:p-2 rounded bg-gray-100 text-base">
@@ -107,20 +96,20 @@
                 </div>
             </div>
 
-            <!-- 右側：產品列表與搜尋 (手機上佔滿寬度) -->
+            <!-- 右側：產品列表與搜尋 -->
             <div class="lg:col-span-2">
                 <div class="bg-white p-3 sm:p-4 rounded-lg shadow mb-4">
                     <input type="text" id="search-input" oninput="renderList()" placeholder="🔍 搜尋產品編號、名稱或品牌..." class="w-full border-2 border-blue-100 p-3 sm:p-3 rounded-lg focus:border-blue-500 outline-none text-base">
                 </div>
                 <div id="product-list" class="grid grid-cols-1 gap-3 sm:gap-4">
-                    <!-- 動態產生的產品卡片 -->
+                    <!-- 動態產生 -->
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 庫存更新 Modal (手機友善) -->
+<!-- 庫存更新 Modal -->
 <div id="update-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
     <div class="bg-white p-5 sm:p-6 rounded-lg shadow-lg w-full max-w-md">
         <h3 class="text-lg font-bold mb-4">更新庫存</h3>
@@ -140,15 +129,14 @@
 <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-    const SUPABASE_URL = 'https://tvlawluemqowbultjhzl.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2bGF3bHVlbXFvd2J1bHRqaHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjEwMTgsImV4cCI6MjA4ODgzNzAxOH0.7WA04as-aYZYqKJLT3nl6f2jSx4P7pyZOyiA8RGaXiM';
+    // 使用您提供的新 Supabase 專案資訊
+    const SUPABASE_URL = 'https://nfcmtgskjnygcaeiyvlc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mY210Z3Nram55Z2NhZWl5dmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0MzY2MDIsImV4cCI6MjA4OTAxMjYwMn0.tSxyhtZjWuaGbs7dsHnoLwmfKsf-RrHwqGH5L3E-xRs';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let allProducts = [];
     let editingId = null;
     let originalImageUrl = null;
-
-    // Modal 控制
     let currentUpdateProductId = null;
 
     // 認證處理
@@ -363,7 +351,6 @@
         document.getElementById('btn-cancel').classList.remove('hidden');
     };
 
-    // 取消編輯
     window.cancelEdit = () => {
         editingId = null;
         originalImageUrl = null;
@@ -384,7 +371,6 @@
         document.getElementById('btn-cancel').classList.add('hidden');
     };
 
-    // 刪除產品
     window.deleteProduct = async (id, imageUrl) => {
         if (!confirm('確定刪除此產品？歷史記錄也將一併刪除。')) return;
         try {
@@ -399,7 +385,6 @@
         }
     };
 
-    // 開啟更新庫存 Modal
     window.openUpdateModal = (productId, productName, currentStock) => {
         currentUpdateProductId = productId;
         document.getElementById('modal-product-name').innerText = `產品：${productName} (目前 ${currentStock})`;
@@ -413,7 +398,6 @@
         currentUpdateProductId = null;
     };
 
-    // 確認庫存更新
     window.confirmUpdate = async () => {
         const newStock = parseInt(document.getElementById('modal-new-stock').value, 10);
         const notes = document.getElementById('modal-notes').value.trim();
@@ -454,7 +438,6 @@
         }
     };
 
-    // 查看歷史記錄
     window.viewHistory = async (productId) => {
         const { data, error } = await supabase
             .from('stock_updates')
@@ -477,7 +460,6 @@
         alert(msg);
     };
 
-    // 匯出當前庫存 CSV
     window.exportCurrentStock = () => {
         if (!allProducts.length) {
             alert('無資料可匯出');
@@ -501,7 +483,6 @@
         downloadCSV(csvContent, '目前庫存.csv');
     };
 
-    // 匯出歷史記錄 CSV
     window.exportStockHistory = async () => {
         const { data, error } = await supabase
             .from('stock_updates')
@@ -539,23 +520,20 @@
         URL.revokeObjectURL(link.href);
     }
 
-    // 渲染列表 (低庫存置頂)
     window.renderList = () => {
         const term = document.getElementById('search-input').value.toLowerCase();
         const container = document.getElementById('product-list');
 
-        // 先過濾，再排序：低庫存的排前面
         let filtered = allProducts.filter(p =>
             (p.product_code && p.product_code.toLowerCase().includes(term)) ||
             (p.name && p.name.toLowerCase().includes(term)) ||
             (p.brand && p.brand.toLowerCase().includes(term))
         );
 
-        // 低庫存置頂：current_stock < min_stock 的排在前面
         filtered.sort((a, b) => {
             const aLow = a.current_stock < a.min_stock ? 1 : 0;
             const bLow = b.current_stock < b.min_stock ? 1 : 0;
-            return bLow - aLow; // 低庫存的排前
+            return bLow - aLow;
         });
 
         container.innerHTML = filtered.map(p => {
@@ -577,8 +555,8 @@
                 <!-- 圖片顯示區 -->
                 <div class="mt-2 flex justify-center sm:justify-start">
                     ${p.image_url 
-                        ? `<img src="${p.image_url}" alt="product" class="w-full sm:w-32 h-32 object-cover rounded border">`
-                        : `<div class="w-full sm:w-32 h-32 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">無圖片</div>`}
+    ? `<img src="${p.image_url}" alt="product" class="w-full sm:w-32 h-32 object-cover rounded border">`
+    : `<div class="w-full sm:w-32 h-32 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-sm">📷 無圖片</div>`}
                 </div>
                 <div class="mt-2">
                     <p class="font-bold text-base">${p.name}</p>
