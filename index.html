@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>存貨管理系統 (手機優化版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自訂手機觸控區域 */
+        button, select, input[type="file"] {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div id="app" class="container mx-auto p-2 sm:p-4">
+    <!-- 登入畫面 -->
+    <div id="login-view" class="max-w-md mx-auto mt-10 sm:mt-20 bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+        <h2 class="text-xl sm:text-2xl font-bold mb-6 text-center">存貨系統登入</h2>
+        <input type="email" id="login-email" placeholder="電郵" class="w-full border p-3 sm:p-2 mb-4 rounded text-base">
+        <input type="password" id="login-pwd" placeholder="密碼" class="w-full border p-3 sm:p-2 mb-4 rounded text-base">
+        <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-3 sm:p-2 rounded text-lg sm:text-base hover:bg-blue-700">登入</button>
+    </div>
+
+    <!-- 主畫面 -->
+    <div id="main-view" class="hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+            <h1 class="text-xl sm:text-2xl font-bold text-blue-800">存貨管理系統</h1>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="exportCurrentStock()" class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 whitespace-nowrap">📥 匯出庫存</button>
+                <button onclick="exportStockHistory()" class="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700 whitespace-nowrap">📊 匯出歷史</button>
+                <button onclick="handleLogout()" class="text-red-500 underline px-2 py-2 text-sm">登出</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- 左側：新增/編輯產品表單 (手機上佔滿寬度) -->
+            <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
+                <h2 class="font-bold mb-3 border-b pb-2 text-lg" id="form-title">新增產品</h2>
+                <div class="space-y-3">
+                    <!-- 分類 -->
+                    <label class="block text-sm font-medium">分類</label>
+                    <select id="category" class="w-full border p-3 sm:p-2 rounded text-base bg-white">
+                        <option value="">請選擇分類</option>
+                        <option>Motion</option>
+                        <option>CCDC</option>
+                        <option>Village</option>
+                        <option>Toilet</option>
+                        <option>office</option>
+                        <option>other</option>
+                    </select>
+
+                    <!-- 品牌 -->
+                    <label class="block text-sm font-medium">品牌</label>
+                    <input type="text" id="brand" placeholder="品牌名稱" class="w-full border p-3 sm:p-2 rounded text-base">
+
+                    <!-- 產品編號 -->
+                    <label class="block text-sm font-medium">產品編號</label>
+                    <input type="text" id="product-code" placeholder="產品編號" class="w-full border p-3 sm:p-2 rounded text-base">
+
+                    <!-- 產品名稱 -->
+                    <label class="block text-sm font-medium">產品名稱</label>
+                    <input type="text" id="name" placeholder="產品名稱" class="w-full border p-3 sm:p-2 rounded text-base">
+
+                    <!-- 描述 -->
+                    <label class="block text-sm font-medium">描述</label>
+                    <textarea id="description" placeholder="描述" rows="2" class="w-full border p-3 sm:p-2 rounded text-base"></textarea>
+                    
+                    <!-- 最低庫存量 -->
+                    <label class="block text-sm font-medium">最低庫存量</label>
+                    <input type="number" id="min-stock" min="0" value="0" class="w-full border p-3 sm:p-2 rounded text-base">
+
+                    <!-- 存放位置 -->
+                    <label class="block text-sm font-medium">存放位置</label>
+                    <select id="location" class="w-full border p-3 sm:p-2 rounded text-base bg-white">
+                        <option value="">請選擇</option>
+                        <option>A1</option><option>A2</option><option>A3</option>
+                        <option>B1</option><option>B2</option><option>B3</option>
+                        <option>C1</option><option>C2</option><option>C3</option>
+                        <option>D1</option><option>D2</option><option>D3</option>
+                        <option>E1</option><option>E2</option><option>E3</option>
+                        <option>F1</option><option>F2</option><option>F3</option>
+                        <option>G1</option><option>G2</option><option>G3</option>
+                        <option>other</option>
+                    </select>
+
+                    <!-- 單位 -->
+                    <label class="block text-sm font-medium">單位</label>
+                    <input type="text" id="unit" placeholder="例如：個、箱、公斤" class="w-full border p-3 sm:p-2 rounded text-base">
+
+                    <!-- 圖片上傳 (手機可直接拍照) -->
+                    <label class="block text-sm font-medium">產品圖片 (JPG/PNG，將自動壓縮)</label>
+                    <input type="file" id="image-file" accept="image/jpeg,image/png,image/jpg" capture="environment" class="w-full text-sm border p-2 rounded bg-white">
+                    <p class="text-xs text-gray-500">點擊可拍照或選擇圖片，系統會自動壓縮</p>
+
+                    <!-- 目前庫存 (僅編輯時顯示) -->
+                    <div id="current-stock-field" class="hidden">
+                        <label class="block text-sm font-medium">目前庫存</label>
+                        <input type="number" id="current-stock" readonly class="w-full border p-3 sm:p-2 rounded bg-gray-100 text-base">
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2 mt-4">
+                        <button onclick="handleFormSubmit()" id="btn-submit" class="flex-1 bg-green-600 text-white p-3 sm:p-2 rounded text-lg sm:text-base">確認儲存</button>
+                        <button onclick="cancelEdit()" id="btn-cancel" class="flex-1 bg-gray-400 text-white p-3 sm:p-2 rounded text-lg sm:text-base hidden">取消編輯</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：產品列表與搜尋 (手機上佔滿寬度) -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-3 sm:p-4 rounded-lg shadow mb-4">
+                    <input type="text" id="search-input" oninput="renderList()" placeholder="🔍 搜尋產品編號、名稱或品牌..." class="w-full border-2 border-blue-100 p-3 sm:p-3 rounded-lg focus:border-blue-500 outline-none text-base">
+                </div>
+                <div id="product-list" class="grid grid-cols-1 gap-3 sm:gap-4">
+                    <!-- 動態產生的產品卡片 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 庫存更新 Modal (手機友善) -->
+<div id="update-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white p-5 sm:p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h3 class="text-lg font-bold mb-4">更新庫存</h3>
+        <p id="modal-product-name" class="mb-3 text-base"></p>
+        <label class="block text-sm mb-1 font-medium">新庫存量</label>
+        <input type="number" id="modal-new-stock" class="w-full border p-3 sm:p-2 rounded mb-3 text-base">
+        <label class="block text-sm mb-1 font-medium">備註 (選填)</label>
+        <input type="text" id="modal-notes" class="w-full border p-3 sm:p-2 rounded mb-4 text-base">
+        <div class="flex flex-col sm:flex-row justify-end gap-2">
+            <button onclick="closeUpdateModal()" class="px-4 py-3 sm:py-2 bg-gray-300 rounded text-base">取消</button>
+            <button onclick="confirmUpdate()" class="px-4 py-3 sm:py-2 bg-blue-600 text-white rounded text-base">確認更新</button>
+        </div>
+    </div>
+</div>
+
+<!-- Supabase SDK -->
+<script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    const SUPABASE_URL = 'https://tvlawluemqowbultjhzl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2bGF3bHVlbXFvd2J1bHRqaHpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjEwMTgsImV4cCI6MjA4ODgzNzAxOH0.7WA04as-aYZYqKJLT3nl6f2jSx4P7pyZOyiA8RGaXiM';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let allProducts = [];
+    let editingId = null;
+    let originalImageUrl = null;
+
+    // Modal 控制
+    let currentUpdateProductId = null;
+
+    // 認證處理
+    window.handleLogin = async () => {
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-pwd').value;
+        const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+        if (error) alert('登入失敗: ' + error.message);
+    };
+
+    window.handleLogout = async () => {
+        await supabase.auth.signOut();
+        allProducts = [];
+        renderList();
+        cancelEdit();
+    };
+
+    supabase.auth.onAuthStateChange((event, session) => {
+        const user = session?.user ?? null;
+        document.getElementById('login-view').classList.toggle('hidden', !!user);
+        document.getElementById('main-view').classList.toggle('hidden', !user);
+        if (user) loadData();
+        else {
+            allProducts = [];
+            renderList();
+            cancelEdit();
+        }
+    });
+
+    (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('main-view').classList.remove('hidden');
+            loadData();
+        }
+    })();
+
+    // 圖片壓縮函數
+    function compressImage(file, maxWidth = 1024, maxHeight = 1024, quality = 0.8) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (!blob) reject(new Error('Canvas 轉換失敗'));
+                        resolve(blob);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
+    }
+
+    // 從URL提取Storage路徑
+    function extractPathFromUrl(url) {
+        if (!url) return null;
+        const base = `${SUPABASE_URL}/storage/v1/object/public/products/`;
+        if (url.startsWith(base)) {
+            return url.substring(base.length);
+        }
+        return null;
+    }
+
+    // 刪除Storage檔案
+    async function deleteStorageFile(url) {
+        if (!url) return;
+        const path = extractPathFromUrl(url);
+        if (path) {
+            await supabase.storage.from('products').remove([path]);
+        }
+    }
+
+    // 上傳圖片
+    async function uploadImageIfSelected(fileInput) {
+        const file = fileInput.files[0];
+        if (!file) return null;
+
+        const compressedBlob = await compressImage(file);
+        const fileName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+        const fileObj = new File([compressedBlob], fileName, { type: 'image/jpeg' });
+        const filePath = `products/${Date.now()}_${fileName}`;
+        const { error } = await supabase.storage.from('products').upload(filePath, fileObj);
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('products').getPublicUrl(filePath);
+        return urlData.publicUrl;
+    }
+
+    // 載入產品資料
+    async function loadData() {
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) {
+            console.error('載入失敗:', error);
+        } else {
+            allProducts = data || [];
+            renderList();
+        }
+    }
+
+    // 表單提交
+    window.handleFormSubmit = async () => {
+        const btn = document.getElementById('btn-submit');
+        const category = document.getElementById('category').value;
+        const brand = document.getElementById('brand').value.trim();
+        const productCode = document.getElementById('product-code').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const minStock = parseInt(document.getElementById('min-stock').value, 10) || 0;
+        const location = document.getElementById('location').value;
+        const unit = document.getElementById('unit').value.trim();
+        const imageInput = document.getElementById('image-file');
+
+        if (!name) {
+            alert('請填寫產品名稱');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = '處理中...';
+
+        try {
+            let imageUrl = null;
+            if (imageInput.files.length > 0) {
+                imageUrl = await uploadImageIfSelected(imageInput);
+                if (editingId && originalImageUrl) {
+                    await deleteStorageFile(originalImageUrl);
+                }
+            } else if (editingId && originalImageUrl) {
+                imageUrl = originalImageUrl;
+            }
+
+            const baseData = {
+                category,
+                brand,
+                product_code: productCode,
+                name,
+                description,
+                min_stock: minStock,
+                location,
+                unit,
+                image_url: imageUrl,
+            };
+
+            if (editingId) {
+                await supabase.from('products').update(baseData).eq('id', editingId);
+                alert('更新成功！');
+            } else {
+                const newRecord = {
+                    ...baseData,
+                    current_stock: 0,
+                };
+                await supabase.from('products').insert([newRecord]);
+                alert('新增成功！');
+            }
+
+            cancelEdit();
+            document.getElementById('image-file').value = '';
+            await loadData();
+        } catch (e) {
+            alert('錯誤：' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = editingId ? '更新產品' : '確認儲存';
+        }
+    };
+
+    // 開始編輯
+    window.startEdit = (product) => {
+        document.getElementById('category').value = product.category || '';
+        document.getElementById('brand').value = product.brand || '';
+        document.getElementById('product-code').value = product.product_code || '';
+        document.getElementById('name').value = product.name || '';
+        document.getElementById('description').value = product.description || '';
+        document.getElementById('min-stock').value = product.min_stock || 0;
+        document.getElementById('location').value = product.location || '';
+        document.getElementById('unit').value = product.unit || '';
+        document.getElementById('image-file').value = '';
+
+        document.getElementById('current-stock-field').classList.remove('hidden');
+        document.getElementById('current-stock').value = product.current_stock || 0;
+
+        editingId = product.id;
+        originalImageUrl = product.image_url;
+
+        document.getElementById('form-title').innerText = '編輯產品';
+        document.getElementById('btn-submit').innerText = '更新產品';
+        document.getElementById('btn-cancel').classList.remove('hidden');
+    };
+
+    // 取消編輯
+    window.cancelEdit = () => {
+        editingId = null;
+        originalImageUrl = null;
+        document.getElementById('category').value = '';
+        document.getElementById('brand').value = '';
+        document.getElementById('product-code').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('min-stock').value = '0';
+        document.getElementById('location').value = '';
+        document.getElementById('unit').value = '';
+        document.getElementById('image-file').value = '';
+        document.getElementById('current-stock-field').classList.add('hidden');
+        document.getElementById('current-stock').value = '';
+
+        document.getElementById('form-title').innerText = '新增產品';
+        document.getElementById('btn-submit').innerText = '確認儲存';
+        document.getElementById('btn-cancel').classList.add('hidden');
+    };
+
+    // 刪除產品
+    window.deleteProduct = async (id, imageUrl) => {
+        if (!confirm('確定刪除此產品？歷史記錄也將一併刪除。')) return;
+        try {
+            if (imageUrl) await deleteStorageFile(imageUrl);
+            const { error } = await supabase.from('products').delete().eq('id', id);
+            if (error) throw error;
+            alert('刪除成功');
+            if (editingId === id) cancelEdit();
+            await loadData();
+        } catch (e) {
+            alert('刪除失敗：' + e.message);
+        }
+    };
+
+    // 開啟更新庫存 Modal
+    window.openUpdateModal = (productId, productName, currentStock) => {
+        currentUpdateProductId = productId;
+        document.getElementById('modal-product-name').innerText = `產品：${productName} (目前 ${currentStock})`;
+        document.getElementById('modal-new-stock').value = currentStock;
+        document.getElementById('modal-notes').value = '';
+        document.getElementById('update-modal').classList.remove('hidden');
+    };
+
+    window.closeUpdateModal = () => {
+        document.getElementById('update-modal').classList.add('hidden');
+        currentUpdateProductId = null;
+    };
+
+    // 確認庫存更新
+    window.confirmUpdate = async () => {
+        const newStock = parseInt(document.getElementById('modal-new-stock').value, 10);
+        const notes = document.getElementById('modal-notes').value.trim();
+        if (isNaN(newStock) || newStock < 0) {
+            alert('請輸入有效的非負整數');
+            return;
+        }
+
+        try {
+            const { data: product, error: fetchError } = await supabase
+                .from('products')
+                .select('current_stock')
+                .eq('id', currentUpdateProductId)
+                .single();
+            if (fetchError) throw fetchError;
+
+            const previousStock = product.current_stock;
+
+            await supabase
+                .from('products')
+                .update({ current_stock: newStock })
+                .eq('id', currentUpdateProductId);
+
+            await supabase
+                .from('stock_updates')
+                .insert([{
+                    product_id: currentUpdateProductId,
+                    previous_stock: previousStock,
+                    new_stock: newStock,
+                    notes: notes,
+                }]);
+
+            alert('庫存更新成功');
+            closeUpdateModal();
+            await loadData();
+        } catch (e) {
+            alert('更新失敗：' + e.message);
+        }
+    };
+
+    // 查看歷史記錄
+    window.viewHistory = async (productId) => {
+        const { data, error } = await supabase
+            .from('stock_updates')
+            .select('*')
+            .eq('product_id', productId)
+            .order('update_date', { ascending: false });
+        if (error) {
+            alert('無法載入歷史：' + error.message);
+            return;
+        }
+        if (!data.length) {
+            alert('尚無歷史記錄');
+            return;
+        }
+        let msg = '庫存變動歷史：\n';
+        data.forEach((item, idx) => {
+            const date = new Date(item.update_date).toLocaleString('zh-TW');
+            msg += `\n${idx+1}. ${date}\n   從 ${item.previous_stock} 變為 ${item.new_stock}\n   備註：${item.notes || '無'}\n`;
+        });
+        alert(msg);
+    };
+
+    // 匯出當前庫存 CSV
+    window.exportCurrentStock = () => {
+        if (!allProducts.length) {
+            alert('無資料可匯出');
+            return;
+        }
+        const headers = ['分類', '品牌', '產品編號', '名稱', '描述', '最低庫存', '目前庫存', '存放位置', '單位', '圖片網址', '建立時間'];
+        const rows = allProducts.map(p => [
+            p.category || '',
+            p.brand || '',
+            p.product_code || '',
+            p.name,
+            p.description || '',
+            p.min_stock,
+            p.current_stock,
+            p.location || '',
+            p.unit || '',
+            p.image_url || '',
+            new Date(p.created_at).toLocaleString('zh-TW')
+        ]);
+        const csvContent = [headers.join(','), ...rows.map(r => r.map(cell => `"${cell}"`).join(','))].join('\n');
+        downloadCSV(csvContent, '目前庫存.csv');
+    };
+
+    // 匯出歷史記錄 CSV
+    window.exportStockHistory = async () => {
+        const { data, error } = await supabase
+            .from('stock_updates')
+            .select('*, products(name, product_code, brand, category)')
+            .order('update_date', { ascending: false });
+        if (error) {
+            alert('無法取得歷史：' + error.message);
+            return;
+        }
+        if (!data.length) {
+            alert('無歷史記錄可匯出');
+            return;
+        }
+        const headers = ['分類', '品牌', '產品編號', '產品名稱', '更新前庫存', '更新後庫存', '更新時間', '備註'];
+        const rows = data.map(u => [
+            u.products?.category || '',
+            u.products?.brand || '',
+            u.products?.product_code || '',
+            u.products?.name || '',
+            u.previous_stock,
+            u.new_stock,
+            new Date(u.update_date).toLocaleString('zh-TW'),
+            u.notes || ''
+        ]);
+        const csvContent = [headers.join(','), ...rows.map(r => r.map(cell => `"${cell}"`).join(','))].join('\n');
+        downloadCSV(csvContent, '庫存歷史.csv');
+    };
+
+    function downloadCSV(csv, filename) {
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    // 渲染列表 (低庫存置頂)
+    window.renderList = () => {
+        const term = document.getElementById('search-input').value.toLowerCase();
+        const container = document.getElementById('product-list');
+
+        // 先過濾，再排序：低庫存的排前面
+        let filtered = allProducts.filter(p =>
+            (p.product_code && p.product_code.toLowerCase().includes(term)) ||
+            (p.name && p.name.toLowerCase().includes(term)) ||
+            (p.brand && p.brand.toLowerCase().includes(term))
+        );
+
+        // 低庫存置頂：current_stock < min_stock 的排在前面
+        filtered.sort((a, b) => {
+            const aLow = a.current_stock < a.min_stock ? 1 : 0;
+            const bLow = b.current_stock < b.min_stock ? 1 : 0;
+            return bLow - aLow; // 低庫存的排前
+        });
+
+        container.innerHTML = filtered.map(p => {
+            const isLowStock = p.current_stock < p.min_stock;
+            return `
+            <div class="bg-white p-3 sm:p-4 rounded shadow ${isLowStock ? 'border-l-4 border-red-500 bg-red-50' : 'border-l-4 border-blue-500'}">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="bg-gray-200 text-xs px-2 py-1 rounded font-mono">${p.product_code || ''}</span>
+                        ${p.category ? `<span class="bg-blue-100 text-xs px-2 py-1 rounded">${p.category}</span>` : ''}
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                        <button onclick='startEdit(${JSON.stringify(p).replace(/'/g, "\\'")})' class="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 border border-blue-200 rounded">✏️ 編輯</button>
+                        <button onclick="openUpdateModal('${p.id}', '${p.name}', ${p.current_stock})" class="text-green-600 hover:text-green-800 text-sm px-2 py-1 border border-green-200 rounded">📦 更新</button>
+                        <button onclick="viewHistory('${p.id}')" class="text-purple-600 hover:text-purple-800 text-sm px-2 py-1 border border-purple-200 rounded">📜 歷史</button>
+                        <button onclick="deleteProduct('${p.id}', '${p.image_url || ''}')" class="text-red-500 hover:text-red-700 text-sm px-2 py-1 border border-red-200 rounded">🗑️ 刪除</button>
+                    </div>
+                </div>
+                <!-- 圖片顯示區 -->
+                <div class="mt-2 flex justify-center sm:justify-start">
+                    ${p.image_url 
+                        ? `<img src="${p.image_url}" alt="product" class="w-full sm:w-32 h-32 object-cover rounded border">`
+                        : `<div class="w-full sm:w-32 h-32 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">無圖片</div>`}
+                </div>
+                <div class="mt-2">
+                    <p class="font-bold text-base">${p.name}</p>
+                    <p class="text-sm text-gray-600">品牌：${p.brand || ''}</p>
+                    <p class="text-sm text-gray-600">${p.description || ''}</p>
+                </div>
+                <div class="mt-2 text-sm grid grid-cols-2 gap-1">
+                    <span>最低庫存: ${p.min_stock} ${p.unit || ''}</span>
+                    <span class="${isLowStock ? 'text-red-600 font-bold' : ''}">目前: ${p.current_stock} ${p.unit || ''}</span>
+                    <span>位置: ${p.location || ''}</span>
+                    <span>單位: ${p.unit || ''}</span>
+                </div>
+                <div class="mt-2 text-xs text-gray-400">建立: ${new Date(p.created_at).toLocaleDateString('zh-TW')}</div>
+            </div>
+        `}).join('');
+    };
+</script>
+</body>
+</html>
